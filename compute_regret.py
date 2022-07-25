@@ -65,14 +65,13 @@ v = np.zeros(shape)
 path = "dataset/"+dataset
 data = pd.read_csv(path, header = None)
 data = data.to_numpy()
-print(data.shape[0])
+
 
 x_data = np.zeros([data.shape[0], f])
 y_data = np.zeros([data.shape[0], c],dtype='int64')
 x_data = data[:,1:]
-print(data[50666:50669,0])
 y_data [range(data.shape[0]),data[:,0].astype('int64')] = 1
-print("ok")
+
 
 
 
@@ -116,24 +115,24 @@ def loss_online(x,t):
 	k = t * batch_size
 	return loss(x,x_data[k:k + batch_size],y_data[k:k + batch_size])
 
-def compute_gradient(x,x_data,y_data):
+def compute_gradient_not_used(x,x_data,y_data):
 	data_size = x_data.shape[0]
 	z = x.T @ x_data.T
-	z[z < -100] = -100
-	z[z > 100] = 100
+	z[z < -20] = -20
+	z[z > 20] = 20
 	tmp_exp = np.exp(z)
 	tmp_denominator = np.sum(tmp_exp,axis=0)
-	tmp_exp = tmp_exp / (tmp_denominator+1e-8)
+	tmp_exp = tmp_exp / (tmp_denominator+1e-10)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_exp[j,i] = tmp_exp[j,i] - 1
 	return (x_data.T / data_size) @ tmp_exp.T
 
-def compute_gradient_not_used(x,x_data,y_data):
+def compute_gradient(x,x_data,y_data):
 	z = x_data @ x
 	p = softmax(-z, axis=1)
 	n = x_data.shape[0] 
-	mu = 0.01
+	mu = 0.5
 	gradient = 1/n * (x_data.T @ (y_data - p)) + 2 * mu * x
 	return gradient
 
@@ -205,10 +204,10 @@ def MFW():
 		for l in range(1,L+1):
 			eta_l = min(eta / pow((l + 1),eta_exp), 1.0)
 			noise = -0.5 + np.random.rand(shape[0],shape[1])
-			v = lmo(o[l]*reg + noise)
+			v = lmo(o[l])
 			xs[l] = update_x(xs[l-1], v, eta_l, 1, t)
 		res[t] = xs[L]
-		print(len(res))
+		
 		g = compute_gradient_online(xs[0],t)
 		o[0] = g		
 		for l in range(1,L+1):
@@ -225,7 +224,7 @@ def result_path():
 def draw_regret(regret, name):
     figure(1, figsize=(10, 6))
     x_axis = [i for i in range(1, T+1)]
-    plt.scatter(x_axis, regret)
+    plt.plot(x_axis, regret)
     title = result_path()
     plt.title(title)
     plt.xlabel("Number of Rounds T")
@@ -238,9 +237,9 @@ def compute_offline_optimal():
 	return offline_optimal
 
 def regret(online_output,offline_optimal):
-	node_loss = [loss_online(online_output[t],t) for t in range(T)]
-	cummulitative_node_loss = [sum(node_loss[:t]) for t in range(T)] 
-	regrets = [ cummulitative_node_loss[t] - loss_offline(offline_optimal,t) for t in range(T)]
+	node_loss = [loss_online(online_output[t],t) - loss_online(offline_optimal,t) for t in range(T)]
+	regrets = [sum(node_loss[:t])/(t+1) for t in range(T)] 
+	#regrets = [ cummulitative_node_loss[t] - loss_offline(offline_optimal,t) for t in range(T)]
 	return regrets
 
 
