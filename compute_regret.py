@@ -67,10 +67,11 @@ data = pd.read_csv(path, header = None)
 data = data.to_numpy()
 
 
-x_data = np.zeros([data.shape[0], f])
-y_data = np.zeros([data.shape[0], c],dtype='int64')
+x_data = np.zeros([data.shape[0], f],dtype="float128")
+y_data = np.zeros([data.shape[0], c],dtype=int)
 x_data = data[:,1:]
-y_data [range(data.shape[0]),data[:,0].astype('int64')] = 1
+x_data = x_data / 255.0
+y_data[range(data.shape[0]),data[:,0].astype('int64')] = 1
 
 
 
@@ -79,34 +80,19 @@ def loss_not_used(x,x_data,y_data):
 	z =  x_data @ x
 	n = x_data.shape[0]
 	z =  x_data @ x
-	z[z < -20] = -20
 	exp_z = np.exp(-z)
-	return 1/n *(np.trace(z @ y_data.T) + np.sum(np.log(np.sum(np.exp(-z),axis=1)+1e-8))) 
+	return 1/n *(np.trace(z @ y_data.T) + np.sum(np.log(np.sum(np.exp(-z),axis=1)))) 
 
 
 def loss(x,x_data,y_data):
 	data_size = x_data.shape[0]
 	z = x.T @ x_data.T
-	z[z < -100] = -100
-	z[z > 100] = 100
 	tmp_exp = np.exp(z)
 	tmp_numerator = np.zeros((1,data_size))
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_numerator[0,i] = tmp_exp[j,i]
-	return - np.mean(np.log(tmp_numerator / np.sum(tmp_exp,axis=0)))
-
-
-# def loss(W, X, y):
-#     data_size = X.shape[1]
-#     print(X.shape)
-#     tmp_exp = np.exp(np.matmul(W.T,X.T))
-#     tmp_numerator = np.zeros(data_size)
-#     for i in range(data_size):
-#         tmp_numerator[i] = tmp_exp[y[i], i]
-#     loss = -np.mean(np.log(tmp_numerator / np.sum(tmp_exp,0)))
-#     return loss
-
+	return - np.mean(np.log(tmp_numerator / np.sum(tmp_exp,axis=0)) )
 
 def loss_offline(x,t):
 	return loss(x,x_data[:(t+1) * batch_size],y_data[:(t+1) * batch_size])
@@ -115,42 +101,24 @@ def loss_online(x,t):
 	k = t * batch_size
 	return loss(x,x_data[k:k + batch_size],y_data[k:k + batch_size])
 
-def compute_gradient_not_used(x,x_data,y_data):
+def compute_gradient(x,x_data,y_data):
 	data_size = x_data.shape[0]
 	z = x.T @ x_data.T
-	z[z < -20] = -20
-	z[z > 20] = 20
 	tmp_exp = np.exp(z)
 	tmp_denominator = np.sum(tmp_exp,axis=0)
-	tmp_exp = tmp_exp / (tmp_denominator+1e-10)
+	tmp_exp = tmp_exp / (tmp_denominator)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_exp[j,i] = tmp_exp[j,i] - 1
 	return (x_data.T / data_size) @ tmp_exp.T
 
-def compute_gradient(x,x_data,y_data):
+def compute_gradient_not_used(x,x_data,y_data):
 	z = x_data @ x
 	p = softmax(-z, axis=1)
 	n = x_data.shape[0] 
 	mu = 0.5
 	gradient = 1/n * (x_data.T @ (y_data - p)) + 2 * mu * x
 	return gradient
-
-# def compute_gradient(W, X, y):
-#     data_size = X.shape[0]
-#     print(X.shape)
-#     tmp_exp = np.exp(np.matmul(W.T, X.T))
-#     #print(tmp_exp)
-
-#     tmp_denominator = np.sum(tmp_exp, 0)
-#     #print(tmp_denominator)
-#     tmp_exp = tmp_exp / tmp_denominator
-#     for i in range(data_size):
-#         tmp_exp[y[i],i] = tmp_exp[y[i],i] - 1
-#     grad = np.matmul((X.T/data_size),tmp_exp.T)
-#     return grad
-
-
 
 def compute_gradient_offline(x,t):
 	return compute_gradient(x,x_data[:(t+1)*batch_size],y_data[:(t+1)*batch_size])
@@ -180,7 +148,7 @@ def lmo(o):
 
 def update_x(x, v, eta_coef, eta_exp, t):
     eta = min(pow(eta_coef / (t + 1),eta_exp), 1.0)
-    return x + eta*(x - v)
+    return x + eta*(v - x)
 
 def FW(t):
 	x = np.zeros(shape)
@@ -233,8 +201,11 @@ def draw_regret(regret, name):
 
 
 def compute_offline_optimal():
-	offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy().reshape(784,10)
-	return offline_optimal
+	offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy()
+	print(shape,offline_optimal.shape)
+	print(offline_optimal[:,1:].shape)
+	#offline_optimal = FW(T)
+	return offline_optimal[:,1:]
 
 def regret(online_output,offline_optimal):
 	node_loss = [loss_online(online_output[t],t) - loss_online(offline_optimal,t) for t in range(T)]
@@ -247,14 +218,16 @@ def regret(online_output,offline_optimal):
 if __name__ == "__main__":
 	start = time.time()	
 	
+	offline_optimal = compute_offline_optimal()
+	
+
 	online_output = MFW()
 	
-	offline_optimal = compute_offline_optimal()
 	
 	regrets = regret(online_output,offline_optimal)
 	
 	draw_regret(regrets,"regrets/"+result_path()+".png")
-	print("The regret is in the file " + "regrets/"+result_path()+".png")
+	print("The regret is in the file " + "regrets/"+result_path()+"2"+".png")
 	
 
 	end = time.time()
