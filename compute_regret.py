@@ -10,6 +10,7 @@ from unittest import result
 from scipy.special import softmax
 from configparser import ConfigParser
 from scipy.sparse import csr_matrix
+import mat73
 
 start = time.time()
 
@@ -64,13 +65,15 @@ v = np.zeros(shape)
 
 path = "dataset/"+dataset
 data = pd.read_csv(path, header = None)
-data = data.to_numpy()
+data_tmp = data.to_numpy()
+data = data_tmp[:,1:]
+data[:,0] = data[:,0] -1 
+print(data[:,0])
 
-
-x_data = np.zeros([data.shape[0], f],dtype="float128")
+x_data = np.zeros([f,data.shape[0]],dtype="float64")
 y_data = np.zeros([data.shape[0], c],dtype=int)
-x_data = data[:,1:]
-x_data = x_data / 255.0
+x_data = data[:,1:].T
+x_data = x_data
 y_data[range(data.shape[0]),data[:,0].astype('int64')] = 1
 
 
@@ -85,32 +88,45 @@ def loss_not_used(x,x_data,y_data):
 
 
 def loss(x,x_data,y_data):
-	data_size = x_data.shape[0]
-	z = x.T @ x_data.T
+	data_size = x_data.shape[1]
+	z = x.T @ x_data
+	print(x.T.shape)
+	print(x_data.shape)
 	tmp_exp = np.exp(z)
+	print(tmp_exp.shape)
 	tmp_numerator = np.zeros((1,data_size))
+	print(tmp_numerator.shape)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_numerator[0,i] = tmp_exp[j,i]
 	return - np.mean(np.log(tmp_numerator / np.sum(tmp_exp,axis=0)) )
 
 def loss_offline(x,t):
-	return loss(x,x_data[:(t+1) * batch_size],y_data[:(t+1) * batch_size])
+	return loss(x,x_data[:,:(t+1) * batch_size],y_data[:(t+1) * batch_size])
 
 def loss_online(x,t):
 	k = t * batch_size
-	return loss(x,x_data[k:k + batch_size],y_data[k:k + batch_size])
+	return loss(x,x_data[:,k:k + batch_size],y_data[k:k + batch_size])
 
 def compute_gradient(x,x_data,y_data):
-	data_size = x_data.shape[0]
-	z = x.T @ x_data.T
+	data_size = x_data.shape[1]
+	print(data_size)
+	print(x.T.shape)
+	print(x_data.shape)
+	z = x.T @ x_data
+	print(z.shape)
 	tmp_exp = np.exp(z)
-	tmp_denominator = np.sum(tmp_exp,axis=0)
-	tmp_exp = tmp_exp / (tmp_denominator)
+	print(tmp_exp.shape)
+	tmp_denominator= np.sum(tmp_exp,axis=0)
+	print(tmp_denominator.shape)
+	tmp_exp = np.divide(tmp_exp,tmp_denominator)
+	print(tmp_exp.shape)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_exp[j,i] = tmp_exp[j,i] - 1
-	return (x_data.T / data_size) @ tmp_exp.T
+	print(x_data.shape)
+	print(tmp_exp.shape)
+	return (x_data / data_size) @ tmp_exp.T
 
 def compute_gradient_not_used(x,x_data,y_data):
 	z = x_data @ x
@@ -121,16 +137,16 @@ def compute_gradient_not_used(x,x_data,y_data):
 	return gradient
 
 def compute_gradient_offline(x,t):
-	return compute_gradient(x,x_data[:(t+1)*batch_size],y_data[:(t+1)*batch_size])
+	return compute_gradient(x,x_data[:,:(t+1)*batch_size],y_data[:(t+1)*batch_size])
 
 def compute_gradient_online(x,t):
 	k = t* batch_size
 	j = k + batch_size
-	return compute_gradient(x,x_data[k:j], y_data[k:j])
+	return compute_gradient(x,x_data[:,k:j], y_data[k:j])
 
 def lmo(o):
 	res = np.zeros(shape)
-	res[np.argmax(abs(o), axis=0), range(c)] = -r * np.sign(np.max(o,axis=0))
+	res[np.argmax(abs(o), axis=0), range(c)] = - r * np.sign(np.max(o,axis=0))
 	return res
 
 # def lmo(V):
@@ -185,7 +201,7 @@ def MFW():
 	return res
 
 def result_path():
-	path = "batch_size"+str(batch_size)+"-N"+str(num_nodes)+"-T"+str(T)+"-L"+str(L)
+	path = "batch_size"+str(batch_size)+"-N"+str(num_nodes)+"-T"+str(T)+"-L"+str(L)+"-2"
 	return path
 
 
@@ -201,15 +217,18 @@ def draw_regret(regret, name):
 
 
 def compute_offline_optimal():
-	offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy()
-	print(shape,offline_optimal.shape)
-	print(offline_optimal[:,1:].shape)
-	#offline_optimal = FW(T)
-	return offline_optimal[:,1:]
+	#offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy()
+	#print(shape,offline_optimal.shape)
+	#print(offline_optimal[:,1:].shape)
+	offline_optimal = FW(T)
+	return offline_optimal
 
 def regret(online_output,offline_optimal):
-	node_loss = [loss_online(online_output[t],t) - loss_online(offline_optimal,t) for t in range(T)]
-	regrets = [sum(node_loss[:t])/(t+1) for t in range(T)] 
+	#node_loss = [loss_online(online_output[t],t) - loss_online(offline_optimal,t) for t in range(T)]
+	data_dict = mat73.loadmat('dataset/MNIST_LR_opt.mat')	
+	offline_value = data_dict["optimal_solution"]
+	node_loss = [loss_online(online_output[t],t) - loss_online(offline_value,t) for t in range(T)]	
+	regrets = [(sum(node_loss[:t])/(t+1)) - offline_value for t in range(T)] 
 	#regrets = [ cummulitative_node_loss[t] - loss_offline(offline_optimal,t) for t in range(T)]
 	return regrets
 
@@ -217,7 +236,7 @@ def regret(online_output,offline_optimal):
 
 if __name__ == "__main__":
 	start = time.time()	
-	
+
 	offline_optimal = compute_offline_optimal()
 	
 
@@ -227,7 +246,7 @@ if __name__ == "__main__":
 	regrets = regret(online_output,offline_optimal)
 	
 	draw_regret(regrets,"regrets/"+result_path()+".png")
-	print("The regret is in the file " + "regrets/"+result_path()+"2"+".png")
+	print("The regret is in the file " + "regrets/"+result_path()+".png")
 	
 
 	end = time.time()
