@@ -90,16 +90,17 @@ def loss_not_used(x,x_data,y_data):
 def loss(x,x_data,y_data):
 	data_size = x_data.shape[1]
 	z = x.T @ x_data
-	print(x.T.shape)
-	print(x_data.shape)
+	#print(x.T.shape)
+	#print(x_data.shape)
 	tmp_exp = np.exp(z)
-	print(tmp_exp.shape)
+	#print(tmp_exp.shape)
 	tmp_numerator = np.zeros((1,data_size))
-	print(tmp_numerator.shape)
+	#print(tmp_numerator.shape)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_numerator[0,i] = tmp_exp[j,i]
-	return - np.mean(np.log(tmp_numerator / np.sum(tmp_exp,axis=0)) )
+	res =  np.log(tmp_numerator / np.sum(tmp_exp,axis=0))
+	return - np.mean(res)
 
 def loss_offline(x,t):
 	return loss(x,x_data[:,:(t+1) * batch_size],y_data[:(t+1) * batch_size])
@@ -110,31 +111,15 @@ def loss_online(x,t):
 
 def compute_gradient(x,x_data,y_data):
 	data_size = x_data.shape[1]
-	print(data_size)
-	print(x.T.shape)
-	print(x_data.shape)
 	z = x.T @ x_data
-	print(z.shape)
 	tmp_exp = np.exp(z)
-	print(tmp_exp.shape)
 	tmp_denominator= np.sum(tmp_exp,axis=0)
-	print(tmp_denominator.shape)
 	tmp_exp = np.divide(tmp_exp,tmp_denominator)
-	print(tmp_exp.shape)
 	for i in range(data_size):
 		j = y_data[i].nonzero()
 		tmp_exp[j,i] = tmp_exp[j,i] - 1
-	print(x_data.shape)
-	print(tmp_exp.shape)
 	return (x_data / data_size) @ tmp_exp.T
 
-def compute_gradient_not_used(x,x_data,y_data):
-	z = x_data @ x
-	p = softmax(-z, axis=1)
-	n = x_data.shape[0] 
-	mu = 0.5
-	gradient = 1/n * (x_data.T @ (y_data - p)) + 2 * mu * x
-	return gradient
 
 def compute_gradient_offline(x,t):
 	return compute_gradient(x,x_data[:,:(t+1)*batch_size],y_data[:(t+1)*batch_size])
@@ -144,9 +129,11 @@ def compute_gradient_online(x,t):
 	j = k + batch_size
 	return compute_gradient(x,x_data[:,k:j], y_data[k:j])
 
-def lmo(o):
-	res = np.zeros(shape)
-	res[np.argmax(abs(o), axis=0), range(c)] = - r * np.sign(np.max(o,axis=0))
+def lmo(z):
+	res = csr_matrix(np.zeros(shape))
+	max_rows = np.argmax(np.abs(z), axis=0)
+	values = -r * np.sign(z[max_rows,range(c)])
+	res[max_rows, range(c)] = values
 	return res
 
 # def lmo(V):
@@ -175,29 +162,34 @@ def FW(t):
 	return x
 
 def MFW():
-	xs = [np.zeros(shape) for _ in range(L+1)]
-	v = np.zeros(shape)
-	o = [np.zeros(shape) for _ in range(L+1)]
-	a = np.zeros(shape)
-	g = np.zeros(shape)
-	res = [np.zeros(shape) for _ in range(T)]
+	x = csr_matrix(np.zeros(shape))
+	v = csr_matrix(np.zeros(shape))
+	o = [csr_matrix(np.zeros(shape)) for _ in range(L+1)]
+	a = csr_matrix(np.zeros(shape))
+	g = csr_matrix(np.zeros(shape))
+	res = [csr_matrix(np.zeros(shape)) for _ in range(T)]
 	global reg
 	reg = reg / np.sqrt(100)
 	for t in range(T):
-		xs[0] = np.zeros(shape)
+		x = np.zeros(shape)
+		g = compute_gradient_online(x,t)
+		o[0] = o[0] + g
+		
 		for l in range(1,L+1):
 			eta_l = min(eta / pow((l + 1),eta_exp), 1.0)
-			noise = -0.5 + np.random.rand(shape[0],shape[1])
-			v = lmo(o[l])
-			xs[l] = update_x(xs[l-1], v, eta_l, 1, t)
-		res[t] = xs[L]
-		
-		g = compute_gradient_online(xs[0],t)
-		o[0] = g		
-		for l in range(1,L+1):
 			rho_l = min(rho / pow((l + 1),rho_exp), 1.0)
-			g = (1-rho_l)* g + rho_l * compute_gradient_online(xs[l],t)
-			o[l] = o[l-1] + g
+
+			noise = -0.5 + np.random.rand(shape[0],shape[1])
+			
+			v = lmo(o[l]*reg+noise)
+			
+			x = x + eta_l * (v - x)
+			g = (1-rho_l) * g + rho_l * compute_gradient_online(x,t)
+			g = compute_gradient_online(x,t)
+			o[l] = o[l] + g
+			
+
+		res[t] = x
 	return res
 
 def result_path():
@@ -217,18 +209,17 @@ def draw_regret(regret, name):
 
 
 def compute_offline_optimal():
-	#offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy()
+	offline_optimal = pd.read_csv("dataset/optimal_lr.csv", header=None).to_numpy()
 	#print(shape,offline_optimal.shape)
 	#print(offline_optimal[:,1:].shape)
-	offline_optimal = FW(T)
-	return offline_optimal
+	#offline_optimal = FW(T)
+	return offline_optimal[:,1:]
 
 def regret(online_output,offline_optimal):
 	#node_loss = [loss_online(online_output[t],t) - loss_online(offline_optimal,t) for t in range(T)]
-	data_dict = mat73.loadmat('dataset/MNIST_LR_opt.mat')	
-	offline_value = data_dict["optimal_solution"]
-	node_loss = [loss_online(online_output[t],t) - loss_online(offline_value,t) for t in range(T)]	
-	regrets = [(sum(node_loss[:t])/(t+1)) - offline_value for t in range(T)] 
+	node_loss = [loss_online(online_output[t],t) -  loss_online(offline_optimal,t)  for t in range(T)]	
+	regrets = np.cumsum(node_loss)
+	#regrets = [ cum_online_loss[t]  for t in range(T)] 
 	#regrets = [ cummulitative_node_loss[t] - loss_offline(offline_optimal,t) for t in range(T)]
 	return regrets
 
@@ -237,9 +228,17 @@ def regret(online_output,offline_optimal):
 if __name__ == "__main__":
 	start = time.time()	
 
-	offline_optimal = compute_offline_optimal()
 	
 
+	offline_optimal = compute_offline_optimal()
+	opt_loss = [loss_online(offline_optimal,t) for t in range(T)]
+	#print(loss_offline(offline_optimal,T))
+	#print(sum(opt_loss)/T)
+	#print(loss_offline(np.ones(shape),T))
+	#print(np.max(compute_gradient_offline(offline_optimal,T),axis=0))
+	print("---------------------------------------------")
+	A = lmo(compute_gradient_offline(offline_optimal,T))
+	#print(max(A[A.nonzero()]))
 	online_output = MFW()
 	
 	
