@@ -1,2 +1,4 @@
 *.csv
 *.png
+*.conf
+__pycahce__/*
