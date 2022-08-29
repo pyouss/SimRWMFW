@@ -1,4 +1,7 @@
 *.csv
 *.png
 *.conf
-__pycahce__/*
+__pycache__/*
+__pycache__/
+*__pycache__*
+*.mat
