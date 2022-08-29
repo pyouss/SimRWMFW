@@ -7,5 +7,5 @@ data_array = data_dict["optimal_solution"]
 data_value = data_dict["optimal_value"]
 
 df = pd.DataFrame(data_array)
-df.to_csv("optimal_lr.csv", header=False)
+df.to_csv("optimal_lr.csv",index=False ,header=False)
 print(data_value)
