@@ -23,8 +23,6 @@ pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', None)
 
 
-
-#Read config.ini file
 param_config = ConfigParser()
 param_config.read("config/param.conf")
 
@@ -191,7 +189,6 @@ def draw_regret(regret, name):
 
 
 def compute_offline_optimal(t):
-	#offline_optimal = pd.read_csv("dataset/optimal_lr.csv",header=None).to_numpy()
 	offline_optimal = FW(t)
 	return offline_optimal
 
