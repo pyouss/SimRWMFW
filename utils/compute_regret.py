@@ -151,9 +151,9 @@ def RWMFW(P):
 	reg = reg / np.sqrt(100)
 	n = P.shape[0]
 	i = next_agent((1/n)*np.ones((1,n)),0)
-
 	for t in range(T):
 		x = np.zeros(shape)
+		node_x[i] = x
 		g = compute_gradient_online(x,t)
 		o[0] = o[0] + g
 		
@@ -167,6 +167,7 @@ def RWMFW(P):
 			
 			x = x + eta_l * (v - x)
 			i = next_agent(P,i)
+
 			g = compute_gradient_dist_online(x,t,n,i)
 			o[l] = o[l] + g
 		res[t] = x
