@@ -178,11 +178,7 @@ if __name__ == "__main__":
 				exit_success(1)
 		exit_error("Incorrect argument.")
 
-	if argc == 2:
-		if sys.argv[1].upper() == "MNIST" :
-			modified = modify_mnist()
-		if sys.argv[1].upper() == "CIFAR10" :
-			modified = modify_cifar10()
+	
 		if sys.argv[1].upper() == "MFW":
 			modified = modify_mfw()
 		if sys.argv[1].upper() == "RWOFW":
