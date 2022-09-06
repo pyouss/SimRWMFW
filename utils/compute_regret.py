@@ -105,6 +105,7 @@ def update_x(x, v, eta_coef, eta_exp, t):
 
 def FW(t):
 	x = np.zeros(shape)
+	L_fw = 100
 	for l in range(L_fw):
 		gradient = compute_gradient_offline(x,t)
 		v = log_r.lmo(gradient,r)		                
@@ -153,7 +154,6 @@ def RWMFW(P):
 	i = next_agent((1/n)*np.ones((1,n)),0)
 	for t in range(T):
 		x = np.zeros(shape)
-		node_x[i] = x
 		g = compute_gradient_online(x,t)
 		o[0] = o[0] + g
 		
@@ -172,6 +172,57 @@ def RWMFW(P):
 			o[l] = o[l] + g
 		res[t] = x
 	return res
+
+
+def DMFW(P):
+	n = P.shape[0]
+	x = [lil_matrix(shape) for _ in range(n)]
+	y = [lil_matrix(shape) for _ in range(n)]
+	v = [lil_matrix(shape) for _ in range(n)] 
+	o = [[lil_matrix(shape) for _ in range(L+1)] for _ in range(n)]
+	g = [lil_matrix(shape) for _ in range(n)]
+	d = [lil_matrix(shape) for _ in range(n)]
+	res = [lil_matrix(shape) for _ in range(T)]
+	global reg
+	reg = reg / np.sqrt(100)
+	
+	i = next_agent((1/n)*np.ones((1,n)),0)
+	for t in range(T):
+		for i  in range(n):
+			x[i] = np.zeros(shape)
+			g[i] = compute_gradient_online(x[i],t)
+			o[i][0] = o[i][0] + g[i]
+		
+		for l in range(1,L+1):
+			eta_l = min(eta / pow((l + 1),eta_exp), 1.0)
+			rho_l = min(rho / pow((l + 1),rho_exp), 1.0)
+
+			noise = -0.5 + np.random.rand(shape[0],shape[1])
+			
+			v[i] = log_r.lmo(o[i][l]*reg+noise,r)
+			for i in range(n):
+				y[i] = np.zeros(shape)
+				for j in P[i,:].nonzero()[0]:
+					y[i] += x[j] * P[i,j]
+
+			x[i] = y[i] + eta_l * (v[i] - x[i])
+			for i in range(n):
+				g[i] = (1-rho_l) * d[i] + rho_l * compute_gradient_dist_online(x[i],t,n,i)
+			
+			for i in range(n):
+				d[i] = np.zeros(shape)
+				for j in P[i,:].nonzero()[0]:
+					d[i] += g[j] * P[i,j]
+			
+
+			for i in range(n):
+				g[i] = compute_gradient_dist_online(x[i],t,n,i)
+			o[i][l] = o[i][l] + d[i]
+
+		res[t] = x[0]
+	return res
+
+
 
 def result_path():
 	path = algo.lower()+"-"+graph_name+"-batch_size"+str(batch_size)+"-N"+str(num_nodes)+"-T"+str(T)+"-L"+str(L)
@@ -207,22 +258,27 @@ def exit_error(msg):
 	exit()
 if __name__ == "__main__":
 	start = time.time()	
-
-	
+	offline_optimal = pd.read_csv("dataset/cifar10_optimal.csv",header=None).to_numpy()
+	#offline_optimal = compute_offline_optimal(T)
+	#print(loss_offline(offline_optimal,T))
+	#print(loss_offline(offline_optimal_stored,T))
+	#exit()
 
 	offline_optimal = compute_offline_optimal(T)
 	if algo.upper() == "RWOFW":
 		online_output = RWMFW(transition_matrix)
 	elif algo.upper() == "MFW":
 		online_output = MFW()
+	elif algo.upper() == "DMFW":
+		online_output = DMFW(transition_matrix)
 	else :
-		algorithms = {"mfw","rwofw"}
+		algorithms = {"mfw","rwofw","dmfw"}
 		exit_error(f"Algorithm in parameter is wrong. \n 'algo' not in {algorithms} ")	
-	regrets = regret(online_output,offline_optimal,fixed=True)
 	
+	regrets = regret(online_output,offline_optimal,fixed=True)
 	draw_regret(regrets,"regrets/"+result_path()+".png")
 	print("The regret is in the file " + "regrets/"+result_path()+".png")
-	
+
 	end = time.time()
 	print("Time taken : " + str(end - start)+ "s")
 	

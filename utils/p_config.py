@@ -70,13 +70,14 @@ def modify_cifar10():
 	param_config.set('DATAINFO','f','3072')
 	param_config.set('DATAINFO','c','10')
 	param_config.set('ALGOCONFIG','r','32')
+	param_config.set('ALGOCONFIG','batch_size','500')
 	param_config.set('ALGOCONFIG','l','10')
 	param_config.set('ALGOCONFIG','t','100')
 	param_config.set('ALGOCONFIG','eta','0.1')
 	param_config.set('ALGOCONFIG','eta_exp','0.1')
 	param_config.set('ALGOCONFIG','rho','1')
 	param_config.set('ALGOCONFIG','rho_exp','0.5')
-	param_config.set('ALGOCONFIG','ref','10')
+	param_config.set('ALGOCONFIG','reg','10')
 	param_config.set('FWCONFIG','eta','0.25')
 	param_config.set('FWCONFIG','eta_exp','1')
 	param_config.set('FWCONFIG','l','50')
@@ -87,13 +88,14 @@ def modify_mnist():
 	param_config.set('DATAINFO','f','784')
 	param_config.set('DATAINFO','c','10')
 	param_config.set('ALGOCONFIG','r','8')
+	param_config.set('ALGOCONFIG','batch_size','600')
 	param_config.set('ALGOCONFIG','l','10')
 	param_config.set('ALGOCONFIG','t','100')
 	param_config.set('ALGOCONFIG','eta','1')
 	param_config.set('ALGOCONFIG','eta_exp','1')
 	param_config.set('ALGOCONFIG','rho','4')
 	param_config.set('ALGOCONFIG','rho_exp','0.5')
-	param_config.set('ALGOCONFIG','ref','20')
+	param_config.set('ALGOCONFIG','reg','20')
 	param_config.set('FWCONFIG','eta','1.5')
 	param_config.set('FWCONFIG','eta_exp','1.5')
 	param_config.set('FWCONFIG','l','50')
@@ -107,6 +109,9 @@ def modify_rwofw():
 	param_config.set('ALGOCONFIG','algo','rwofw')
 	return True
 
+def modify_dmfw():
+	param_config.set('ALGOCONFIG','algo','dmfw')
+	return True
 
 def sort_by_int(l):
 	tmp = [ int(e) for e in l ]
@@ -173,21 +178,29 @@ if __name__ == "__main__":
 
 			modified = modify_batch_size(sys.argv[2])
 
-		if modified :
-				update_configs()
-				exit_success(1)
-		exit_error("Incorrect argument.")
+		if sys.argv[1].upper() == "ALGO":
+			if sys.argv[2].upper() == "MFW":
+				modified = modify_mfw()
+			if sys.argv[2].upper() == "RWOFW":
+				modified = modify_rwofw()
+			if sys.argv[2].upper() == "DMFW":
+				modified = modify_dmfw()
 
-	
-		if sys.argv[1].upper() == "MFW":
-			modified = modify_mfw()
-		if sys.argv[1].upper() == "RWOFW":
-			modified = modify_rwofw()
 
 		if modified :
 				update_configs()
 				exit_success(1)
 		exit_error("Incorrect argument.")
+	if argc == 2:
+		if sys.argv[1].upper() == "MNIST":
+			modified = modify_mnist()
+		if sys.argv[1].upper() == "CIFAR10":
+			modified = modify_cifar10()
+
+		if modified :
+			update_configs()
+			exit_success(1)
+		exit_error("Incorrect argument")
 
 	
 	exit_error("Not enough arguments !")
