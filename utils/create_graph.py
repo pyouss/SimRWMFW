@@ -69,6 +69,7 @@ def cycle_graph():
 		res[i, i+1] = 1
 	return res + np.diag(np.ones(n0))
 
+
 def compute_metropolis_transition_matrix(G):
 	P = np.zeros(G.shape)
 	for i in range(G.shape[0]):

@@ -10,6 +10,7 @@ graph_config.read('config/graph.conf')
 n0 = graph_config["COMPLETEPARAM"]["n0"]
 T = param_config["ALGOCONFIG"]["t"]
 L = param_config["ALGOCONFIG"]["l"]
+num_trials = param_config["EXPERIMENTCONFIG"]["num_trials"]
 batch_size = param_config["ALGOCONFIG"]["batch_size"]
 
 
@@ -59,6 +60,10 @@ def modify_iterations(L=L):
 	param_config.set('ALGOCONFIG','l',str(L))
 	return True
 
+def modify_num_trials(num_trials=num_trials):
+	param_config.set('EXPERIMENTCONFIG','num_trials',str(num_trials))
+	return True
+
 
 def modify_batch_size(batch_size=batch_size):
 	param_config.set('ALGOCONFIG','batch_size',str(batch_size))
@@ -74,10 +79,10 @@ def modify_cifar10():
 	param_config.set('ALGOCONFIG','l','10')
 	param_config.set('ALGOCONFIG','t','100')
 	param_config.set('ALGOCONFIG','eta','0.1')
-	param_config.set('ALGOCONFIG','eta_exp','0.1')
+	param_config.set('ALGOCONFIG','eta_exp','1')
 	param_config.set('ALGOCONFIG','rho','1')
 	param_config.set('ALGOCONFIG','rho_exp','0.5')
-	param_config.set('ALGOCONFIG','reg','10')
+	param_config.set('ALGOCONFIG','reg','100')
 	param_config.set('FWCONFIG','eta','0.25')
 	param_config.set('FWCONFIG','eta_exp','1')
 	param_config.set('FWCONFIG','l','50')
@@ -103,10 +108,13 @@ def modify_mnist():
 
 def modify_mfw():
 	param_config.set('ALGOCONFIG','algo','mfw')
+	modify_graph(type="COMPLETE", size=1 ,param=[1])
+	modify_num_trials(num_trials=1)
 	return True
 
-def modify_rwofw():
-	param_config.set('ALGOCONFIG','algo','rwofw')
+def modify_rwmfw():
+	param_config.set('ALGOCONFIG','algo','rwmfw')
+	modify_num_trials(num_trials=50)
 	return True
 
 def modify_dmfw():
@@ -153,7 +161,7 @@ if __name__ == "__main__":
 	
 			if modified:
 				update_configs()
-				exit_success(2)
+				exit_success(1)
 	
 	if argc == 3:
 	
@@ -170,6 +178,13 @@ if __name__ == "__main__":
 				exit_error("number of iterations L should be integer")
 			
 			modified = modify_iterations(sys.argv[2])
+
+		if sys.argv[1].upper() == "TRIALS":
+	
+			if not checkInt(str(sys.argv[2])):
+				exit_error("number of iterations L should be integer")
+			
+			modified = modify_num_trials(sys.argv[2])
 			
 		if sys.argv[1].upper() == "BS" or sys.argv[1].upper() =="BATCH_SIZE":
 			
@@ -181,8 +196,8 @@ if __name__ == "__main__":
 		if sys.argv[1].upper() == "ALGO":
 			if sys.argv[2].upper() == "MFW":
 				modified = modify_mfw()
-			if sys.argv[2].upper() == "RWOFW":
-				modified = modify_rwofw()
+			if sys.argv[2].upper() == "RWMFW":
+				modified = modify_rwmfw()
 			if sys.argv[2].upper() == "DMFW":
 				modified = modify_dmfw()
 
