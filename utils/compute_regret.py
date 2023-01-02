@@ -13,6 +13,7 @@ from scipy.sparse import lil_matrix
 import mat73
 import logistic_regression as log_r
 from create_graph import transition_matrix, graph_name
+import create_graph as cg
 import sys
 sys.path.append('..')
 
@@ -573,16 +574,20 @@ def main():
     print(f"\tDataset: {dataset}")
     print(f"\tNumber of features: {f}")
     print(f"\tNumber of classes: {c}")
-    start = time.time()
     print(f"\tBatch size: {batch_size}")
     print(f"\tNumber of rounds: {T}")
     print(f"\tLearning rate: {eta}")
     print(f"\tLearning rate decay exponent: {eta_exp}")
     print(f"\tRegularization parameter: {reg}")
     print(f"\tChosen algorithm: {algo.upper()}")
-    print(f"Computing offline optimal solution for {dataset[7:-4]} dataset...")
+    if (algo.upper() == 'MFW'):
+    	print(f"\tCentralized settings.")
+    else :
+    	print(f"\tDecentralized settings: ")
+    	print(f"\tGraph : {cg.graph_name}")
     print("")
     print("")
+    print(f"Computing offline optimal solution...")
 
     # Compute the offline optimal solution
     offline_optimal = compute_offline_optimal()
@@ -609,6 +614,8 @@ def main():
         # Save a plot of the regret for this trial
         draw_regret(regrets[trial], f"regrets/{result_path()}_{trial}.png")
 
+    print("")
+    print("")
     # Save plots of the regrets for all trials
     save_multiple_regrets(regrets, f"regrets/{result_path()}")
     # Compute the average regret across all trials
