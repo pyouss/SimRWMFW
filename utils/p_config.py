@@ -179,6 +179,7 @@ def modify_cifar10():
     # Set the 'c' field in the 'DATAINFO' section of the param_config object
     param_config.set('DATAINFO', 'c', '10')
     # Set the 'r' field in the 'ALGOCONFIG' section of the param_config object
+    param_config.set('ALGOCONFIG', 'r', '32')
     # Set the 'batch_size' field in the 'ALGOCONFIG' section of the param_config object
     param_config.set('ALGOCONFIG', 'batch_size', '500')
     # Set the 'l' field in the 'ALGOCONFIG' section of the param_config object
