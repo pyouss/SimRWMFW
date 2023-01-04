@@ -60,7 +60,8 @@ For example, to specify a line graph with 40 nodes, you can use the following co
 ./modify_config.sh g line 40
 ```
 
-Another example, to specify a grid graph of 5 rows and 10 columns with 50 nodes, you can use the following command:
+Another example where parameters are needed to be specified if for grid graphs.
+To specify a grid graph of 5 rows and 10 columns (50 nodes), you can use the following command:
 ```bash
 ./modify_config.sh g grid 50 5 10
 ```
@@ -73,8 +74,8 @@ To switch the dataset for the experiment, you can use the `modify_config.sh` scr
 ```
 The available options for the dataset parameter are:
 
-- mnist: This will change the default parameters for handling the MNIST dataset.
-- cifar10: This will change the default parameters for handling the CIFAR10 dataset.
+- `mnist`: This will change the default parameters for handling the MNIST dataset.
+- `cifar10`: This will change the default parameters for handling the CIFAR10 dataset.
 
 Here is an example of how to switch to the MNIST dataset:
 
