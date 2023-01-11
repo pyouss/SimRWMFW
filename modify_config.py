@@ -21,6 +21,9 @@ L = param_config["ALGOCONFIG"]["l"]
 num_trials = param_config["EXPERIMENTCONFIG"]["num_trials"]
 # Get the batch size
 batch_size = param_config["ALGOCONFIG"]["batch_size"]
+# Get the sub batch size
+sub_batch_size = param_config["ALGOCONFIG"]["sub_batch_size"]
+
 
 def checkInt(str):
     """
@@ -165,6 +168,19 @@ def modify_batch_size(batch_size=batch_size):
     param_config.set('ALGOCONFIG', 'batch_size', str(batch_size))
     return True
 
+def modify_sub_batch_size(sub_batch_size=sub_batch_size):
+    """
+    Modify the sub batch size in the algorithm configuration.
+    
+    Args:
+        batch_size: The new value for the batch size.
+        
+    Returns:
+        True.
+    """
+    # Set the 'batch_size' field in the 'ALGOCONFIG' section of the param_config object to the string representation of batch_size
+    param_config.set('ALGOCONFIG', 'sub_batch_size', str(sub_batch_size))
+    return True
 
 def modify_cifar10():
     """
@@ -183,8 +199,10 @@ def modify_cifar10():
     param_config.set('ALGOCONFIG', 'r', '32')
     # Set the 'batch_size' field in the 'ALGOCONFIG' section of the param_config object
     param_config.set('ALGOCONFIG', 'batch_size', '500')
+    # Set the 'sub_batch_size' field in the 'ALGOCONFIG' section of the param_config object
+    param_config.set('ALGOCONFIG', 'sub_batch_size', '4')
     # Set the 'l' field in the 'ALGOCONFIG' section of the param_config object
-    param_config.set('ALGOCONFIG', 'l', '10')
+    param_config.set('ALGOCONFIG', 'l', '50')
     # Set the 't' field in the 'ALGOCONFIG' section of the param_config object
     param_config.set('ALGOCONFIG', 't', '100')
     # Set the 'eta' field in the 'ALGOCONFIG' section of the param_config object
@@ -222,6 +240,8 @@ def modify_mnist():
     param_config.set('ALGOCONFIG', 'r', '8')
     # Set the 'batch_size' field in the 'ALGOCONFIG' section of the param_config object
     param_config.set('ALGOCONFIG', 'batch_size', '600')
+    # Set the 'sub_batch_size' field in the 'ALGOCONFIG' section of the param_config object
+    param_config.set('ALGOCONFIG', 'sub_batch_size', '600')
     # Set the 'l' field in the 'ALGOCONFIG' section of the param_config object
     param_config.set('ALGOCONFIG', 'l', '10')
     # Set the 't' field in the 'ALGOCONFIG' section of the param_config object
@@ -402,6 +422,13 @@ if __name__ == "__main__":
                 exit_error("the size of batch should be integer")            
             # Modify the batch size
             modified = modify_batch_size(sys.argv[2])
+        # If the first argument is 'SBS' or 'SUB_BATCH_SIZE'
+        if sys.argv[1].upper() == "SBS" or sys.argv[1].upper() =="SUB_BATCH_SIZE":
+            # Check if the batch size is an integer
+            if not checkInt(str(sys.argv[2])):
+                exit_error("the size of sub batch should be integer")            
+            # Modify the batch size
+            modified = modify_sub_batch_size(sys.argv[2])
         # If the first argument is 'ALGO'
         if sys.argv[1].upper() == "ALGO":
             # If the second argument is 'MFW'

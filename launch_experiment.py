@@ -44,6 +44,7 @@ c = int(datainfo["c"])
 
 # Get algorithm parameters
 batch_size = int(algoinfo["batch_size"])
+sub_batch_size = int(algoinfo["sub_batch_size"])
 L = int(algoinfo["l"])
 T = int(algoinfo["t"])
 r = float(algoinfo["r"])
@@ -117,7 +118,7 @@ def compute_gradient_offline(x, t):
     """
     return log_r.compute_gradient(x, x_data[:, :(t+1)*batch_size], y_data[:(t+1)*batch_size])
 
-def compute_gradient_online(x, t):
+def compute_exact_gradient_online(x, t):
     """Compute the gradient of the loss function on a batch of data at time t.
 
     Args:
@@ -131,7 +132,7 @@ def compute_gradient_online(x, t):
     j = k + batch_size
     return log_r.compute_gradient(x, x_data[:, k:j], y_data[k:j])
 
-def compute_stoch_gradient_online(x, t, s):
+def compute_stoch_gradient_online(x, t, s=sub_batch_size):
     """Compute a stochastic gradient of the loss function on a batch of data at time t.
 
     Args:
@@ -147,6 +148,10 @@ def compute_stoch_gradient_online(x, t, s):
     sub_batch = np.floor(np.random.rand(s)*batch_size).astype(int) + k
     return log_r.compute_gradient(x, x_data[:, sub_batch], y_data[sub_batch])
 
+compute_gradient_online_fns = {}
+compute_gradient_online_fns[True] = compute_exact_gradient_online
+compute_gradient_online_fns[False] = compute_stoch_gradient_online
+compute_gradient_online = compute_gradient_online_fns[sub_batch_size == batch_size]
 
 def compute_gradient_dist_online(x, t, n, i):
     """
@@ -582,10 +587,11 @@ def main():
     print(f"\tRegularization parameter: {reg}")
     print(f"\tChosen algorithm: {algo.upper()}")
     if (algo.upper() == 'MFW'):
-    	print(f"\tCentralized settings.")
+        print(f"\tSub batch size: {sub_batch_size}")
+        print(f"\tCentralized settings.")
     else :
-    	print(f"\tDecentralized settings: ")
-    	print(f"\tGraph : {cg.graph_name}")
+        print(f"\tDecentralized settings: ")
+        print(f"\tGraph : {cg.graph_name}")
     print("")
     print("")
     print(f"Computing offline optimal solution...")
@@ -637,7 +643,7 @@ def main():
 
 
 if __name__ == "__main__":
-	main()
+    main()
 	
 
 
