@@ -1,6 +1,7 @@
+#!/usr/bin/python3
+
 import configparser as cp  # import the ConfigParser module
 import sys
-sys.path.append('..')
 
 # Create a ConfigParser object and read in the 'param.conf' file
 param_config = cp.ConfigParser()
@@ -335,6 +336,7 @@ def exit_error(msg):
     # Exit the program
     exit()
 
+success_msg = ""
 
 if __name__ == "__main__":
     # Get the number of command-line arguments
@@ -355,7 +357,7 @@ if __name__ == "__main__":
             if special_graph_tests[sys.argv[2].upper()][1] == 1 and argc==4:
                 # Modify the graph configuration
                 modified = modify_graph(sys.argv[2].upper(), sys.argv[3], [sys.argv[3]])
-            
+            	
             # If there are more than 4 arguments
             if argc > 4:
                 # Modify the graph configuration
@@ -365,8 +367,9 @@ if __name__ == "__main__":
             if modified:
                 # Update the configuration files
                 update_configs()
+                success_msg += "Graph config file `config/graph.conf` is modified."
                 # Exit the program with success status
-                exit_success(1)
+                exit_success(success_msg)
     
     # If there are exactly 3 arguments
     if argc == 3:
@@ -377,6 +380,7 @@ if __name__ == "__main__":
                 exit_error("number of rounds T should be integer")
             # Modify the number of rounds
             modified = modify_round(sys.argv[2])
+            
         # If the first argument is 'L'
         if sys.argv[1].upper() == "L":
             # Check if the number of iterations is an integer
@@ -416,8 +420,9 @@ if __name__ == "__main__":
         if modified :
             # Update the configuration files
             update_configs()
+            success_msg += "Parameter config file `config/param.conf` is modified."
             # Exit the program with success
-            exit_success(1)
+            exit_success(success_msg)
         # If no modification was made, exit the program with an error message
         exit_error("Incorrect argument.")
     # If there is only one argument
@@ -434,8 +439,10 @@ if __name__ == "__main__":
         if modified :
             # Update the configuration files
             update_configs()
+            success_msg += "Parameter config file `config/param.conf` is modified."
             # Exit the program with success
-            exit_success(1)
+            exit_success(success_msg)
+
         # If no modification was made, exit the program with an error message
         exit_error("Incorrect argument")
     # If no modification was made, exit the program with an error message

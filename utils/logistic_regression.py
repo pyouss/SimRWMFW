@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from scipy.sparse import lil_matrix
 from scipy.sparse import csr_matrix
 import numpy as np

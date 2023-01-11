@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # Import necessary libraries
 import os
 import time
@@ -11,11 +12,11 @@ from configparser import ConfigParser
 from scipy.sparse import csr_matrix
 from scipy.sparse import lil_matrix
 import mat73
-import logistic_regression as log_r
-from create_graph import transition_matrix, graph_name
-import create_graph as cg
+import utils.logistic_regression as log_r
+from utils.create_graph import transition_matrix, graph_name
+import utils.create_graph as cg
 import sys
-sys.path.append('..')
+
 
 # Start timer
 start = time.time()

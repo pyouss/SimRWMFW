@@ -1,3 +1,5 @@
+#!/bin/usr/python3
+
 # Import necessary libraries and modules
 import os
 import sys
