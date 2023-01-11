@@ -7,7 +7,7 @@ This project simulates the Random Walk Meta Frank-Wolfe (RWMFW) algorithm for de
 To set up the environment for the experiment, run the following command:
 
 ```bash
-./init.sh
+./init.py
 ```
 
 This will create a `regret` folder where the results of the experiment will be saved.
@@ -15,11 +15,11 @@ This will create a `regret` folder where the results of the experiment will be s
 # Datasets
 This project is designed to handle the MNIST and CIFAR-10 datasets. 
 To download a preprocessed version of one of these datasets, 
-use the following command found in the `dataset` directory:
+use the following command :
 
 ```bash
-./download_preprocessed_dataset.sh mnist
-./download_preprocessed_dataset.sh cifar10
+./download_preprocessed_dataset.py mnist
+./download_preprocessed_dataset.py cifar10
 ```
 Make sure to place the downloaded dataset file in the `dataset` directory.
 
@@ -33,7 +33,7 @@ The `config` directory contains configuration files for the experiment:
 To modify the configuration parameters, you can use the `modify_config.sh` script as follows:
 
 ```bash
-./modify_config.sh [parameter] [value]
+./modify_config.py [parameter] [value]
 ```
 
 - bs: Modifies the batch size.
@@ -47,30 +47,35 @@ Here are some examples of how to use the modify_config.sh script:
 For example, to modify the batch size to 20, you can use the following command:
 
 ```bash
-./modify_config.sh bs 20
+./modify_config.sh py 20
 ```
 
 To specify the type and size of the graph to be used in the experiment, use the following command:
 ```bash
-./modify_config.sh g [type] [size] [parameters (if needed)]
+./modify_config.py g [type] [size] [parameters (if needed)]
 ```
+The available options for the algorithm parameter are:
+- `line` : a line topology which requires only the size.
+- `complete` : a complete topology which requires only the size.
+- `cycle` : a cycle topology which requires only the size.
+- `grid` : a grid topology which requires the size and two parameters that describes its height and width. 
 
 For example, to specify a line graph with 40 nodes, you can use the following command:
 ```bash
-./modify_config.sh g line 40
+./modify_config.py g line 40
 ```
 
 Another example where parameters are needed to be specified if for grid graphs.
 To specify a grid graph of 5 rows and 10 columns (50 nodes), you can use the following command:
 ```bash
-./modify_config.sh g grid 50 5 10
+./modify_config.py g grid 50 5 10
 ```
 
 ## Switching Datasets
 To switch the dataset for the experiment, you can use the `modify_config.sh` script as follows:
 
 ```bash
-./modify_config.sh [dataset]
+./modify_config.py [dataset]
 ```
 The available options for the dataset parameter are:
 
@@ -80,7 +85,7 @@ The available options for the dataset parameter are:
 Here is an example of how to switch to the MNIST dataset:
 
 ```bash
-./modify_config.sh mnist
+./modify_config.py mnist
 ```
 This will update the param.conf file with the following parameters:
 
@@ -103,7 +108,7 @@ reg = 20
 Here is an example of how to switch to the CIFAR10 dataset:
 ```
 ```bash
-./modify_config.sh cifar10
+./modify_config.py cifar10
 ```
 This will update the param.conf file with the following parameters:
 
@@ -129,7 +134,7 @@ reg = 100
 By default, the algorithm that is used in the experiment is RWMFW with decentralized settings. If you want to compare with MFW and run the same experiment in centralized settings, you can switch algorithms using the `modify_config.sh` script as follows:
 
 ```bash
-./modify_config.sh [algorithm]
+./modify_config.py algo [algorithm]
 ```
 The available options for the algorithm parameter are:
 
@@ -138,7 +143,7 @@ The available options for the algorithm parameter are:
 Here is an example of how to switch to the MFW algorithm:
 
 ```bash
-./modify_config.sh mfw
+./modify_config.py algo mfw
 ```
 This will update the `param.conf` file with the following parameter:
 
@@ -152,6 +157,6 @@ algo = mfw
 To run the experiment with the desired parameters, use the following command:
 
 ```bash
-./launch_experiment.sh
+./launch_experiment.py
 ```
 The results of the experiment will be saved in the `regret` folder.
