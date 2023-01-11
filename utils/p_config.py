@@ -396,8 +396,8 @@ if __name__ == "__main__":
             # Check if the batch size is an integer
             if not checkInt(str(sys.argv[2])):
                 exit_error("the size of batch should be integer")            
-        # Modify the batch size
-        modified = modify_batch_size(sys.argv[2])
+            # Modify the batch size
+            modified = modify_batch_size(sys.argv[2])
         # If the first argument is 'ALGO'
         if sys.argv[1].upper() == "ALGO":
             # If the second argument is 'MFW'
