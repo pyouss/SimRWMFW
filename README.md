@@ -18,8 +18,8 @@ To download a preprocessed version of one of these datasets,
 use the following command :
 
 ```bash
-./download_preprocessed_dataset.py mnist
-./download_preprocessed_dataset.py cifar10
+./download_dataset.py mnist
+./download_dataset.py cifar10
 ```
 Make sure to place the downloaded dataset file in the `dataset` directory.
 
