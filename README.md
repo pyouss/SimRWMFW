@@ -105,8 +105,9 @@ eta_exp = 1
 rho = 4
 rho_exp = 0.5
 reg = 20
-Here is an example of how to switch to the CIFAR10 dataset:
 ```
+Here is an example of how to switch to the CIFAR10 dataset:
+
 ```bash
 ./modify_config.py cifar10
 ```
