@@ -47,7 +47,7 @@ Here are some examples of how to use the modify_config.sh script:
 For example, to modify the batch size to 20, you can use the following command:
 
 ```bash
-./modify_config.sh py 20
+./modify_config.py bs 20
 ```
 
 To specify the type and size of the graph to be used in the experiment, use the following command:
